@@ -31,11 +31,16 @@ object Logic {
 
 object LogicRunner {
 
-  def exec(name: String, f: String => XorT[Future, Types.Errors.Error, List[Book]])(implicit ec: ExecutionContext): Future[Unit] =
+  def execWithRecover(name: String, f: String => XorT[Future, Types.Errors.Error, List[Book]])(implicit ec: ExecutionContext): Future[Unit] =
     f(name).fold(
       { err => println(s"Error Received: $err") },
       { books => println(s"These are $name's books ${books.mkString(",")}") }
     ) recover {
         case ex => println(s"Future Error Received: $ex")
     }
+
+  def execWithoutRecover(name: String, f: String => XorT[Future, Types.Errors.Error, List[Book]])(implicit ec: ExecutionContext): Future[Unit] =
+    f(name).fold(
+      { err => println(s"Error Received: $err") },
+      { books => println(s"These are $name's books ${books.mkString(",")}") })
 }
