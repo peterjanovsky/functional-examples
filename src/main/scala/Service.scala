@@ -10,39 +10,35 @@ object ServiceError {
 
 object Service {
 
-  private def liftFuture(f: Future[Xor[CassandraError, List[Action]]])(
-    implicit ec: ExecutionContext
-  ): XorT[Future, ServiceError, List[Action]] =
-    XorT(
-      f.map(xor =>
-        xor.fold(
-          error => Xor.left(ServiceError.Cassandra(error)),
-          actions => Xor.right[ServiceError, List[Action]](actions)
-        )
+  def mergeActionsWithUserXorT(
+    name: String,
+    userFailure: Boolean = false,
+    actionsFailure: Boolean = false
+  )(implicit ec: ExecutionContext): XorT[Future, Throwable, List[Action]] = 
+      for {
+        user <- MySQL.getUserByNameXorT(name, userFailure)
+        actions <- Cassandra.getActionsByUserXorT(user, actionsFailure)
+      } yield actions
+
+  def mergeActionsWithUserXor(
+    name: String,
+    userFailure: Boolean = false,
+    actionsFailure: Boolean = false
+  )(implicit ec: ExecutionContext): Future[Xor[ServiceError, List[Action]]] = 
+      for {
+        result <- MySQL.getUserByNameXor(name, userFailure)
+        actions <- result.fold(
+            error => Future.successful(Xor.left(ServiceError.MySQL(error))),
+            user => Cassandra.getActionsByUserXor(user, actionsFailure).map(_.leftMap(ServiceError.Cassandra))
+          )
+      } yield actions
+
+  def mergeActionsWithUserF(
+    name: String,
+    userFailure: Boolean = false,
+    actionsFailure: Boolean = false
+  )(implicit ec: ExecutionContext): Future[List[Action]] =
+      MySQL.getUserByNameF(name, userFailure).flatMap(user =>
+        Cassandra.getActionsByUserF(user, actionsFailure)
       )
-    )
-
-  def mergeActionsWithUserS(name: String)(implicit ec: ExecutionContext): XorT[Future, ServiceError, List[Action]] = 
-    for {
-      user <- MySQL.getUserByName(name).leftMap(ServiceError.MySQL)
-      actions <- liftFuture(Cassandra.getActionsByUser(user))
-    } yield actions
-
-  def mergeActionsWithUserN(name: String)(implicit ec: ExecutionContext): XorT[Future, ServiceError, List[Action]] = 
-    for {
-      user <- MySQL.getUserByNameN(name).leftMap(ServiceError.MySQL)
-      actions <- liftFuture(Cassandra.getActionsByUser(user))
-    } yield actions
-
-  def mergeActionsWithUserFF(name: String)(implicit ec: ExecutionContext): XorT[Future, ServiceError, List[Action]] = 
-    for {
-      user <- MySQL.getUserByNameFF(name).leftMap(ServiceError.MySQL)
-      actions <- liftFuture(Cassandra.getActionsByUser(user))
-    } yield actions
-
-  def mergeActionsWithUserSF(name: String)(implicit ec: ExecutionContext): XorT[Future, ServiceError, List[Action]] = 
-    for {
-      user <- MySQL.getUserByName(name).leftMap(ServiceError.MySQL)
-      actions <- liftFuture(Cassandra.getActionsByUserF(user))
-    } yield actions
 }

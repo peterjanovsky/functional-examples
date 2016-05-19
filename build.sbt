@@ -29,8 +29,10 @@ libraryDependencies ++= {
     , "io.circe"                    %%  "circe-core"                        % "0.3.0"
     , "io.circe"                    %%  "circe-generic"                     % "0.3.0"
     , "io.circe"                    %%  "circe-parser"                      % "0.3.0"
-    , "org.scalaz"                  %%  "scalaz-core"                       % "7.1.0"
+    , "org.scalaz"                  %%  "scalaz-core"                       % "7.1.2"
+    , "org.scalaz"                  %%  "scalaz-concurrent"                 % "7.1.2"
     , "org.typelevel"               %%  "cats"                              % "0.4.1"
+    , "com.pjanof"                  %%  "smicro"                            % "0.1-SNAPSHOT"
     , "org.scalatest"               %%  "scalatest"                         % "2.2.4" % "test" ) }
 
 // continuous build
