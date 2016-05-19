@@ -10,7 +10,7 @@ object FunctionRunner {
     name: String,
     userFailure: Boolean,
     actionsFailure: Boolean,
-    f: (String, Boolean, Boolean) => XorT[Future, ServiceError, List[Action]]
+    f: (String, Boolean, Boolean) => XorT[Future, Throwable, List[Action]]
   )(implicit ec: ExecutionContext): Future[Unit] =
       f(name, userFailure, actionsFailure).fold(
         { err => println(s"Error Received: $err") },
@@ -23,7 +23,7 @@ object FunctionRunner {
     name: String,
     userFailure: Boolean,
     actionsFailure: Boolean,
-    f: (String, Boolean, Boolean) => Future[Xor[ServiceError, List[Action]]]
+    f: (String, Boolean, Boolean) => Future[Xor[Throwable, List[Action]]]
   )(implicit ec: ExecutionContext): Future[Unit] =
       f(name, userFailure, actionsFailure).map(xor =>
         xor.fold(
@@ -50,8 +50,8 @@ object FunctionRunner {
     name: String,
     userFailure: Boolean,
     actionsFailure: Boolean,
-    f: (String, Boolean, Boolean) => XorT[Future, ServiceError, List[Action]]
-  )(implicit ec: ExecutionContext): Bucket[Xor[ServiceError, List[Action]]] =
+    f: (String, Boolean, Boolean) => XorT[Future, Throwable, List[Action]]
+  )(implicit ec: ExecutionContext): Bucket[Xor[Throwable, List[Action]]] =
       Benchmarker.benchmark(100) {
         f(name, userFailure, actionsFailure).value
       }
@@ -60,8 +60,8 @@ object FunctionRunner {
     name: String,
     userFailure: Boolean,
     actionsFailure: Boolean,
-    f: (String, Boolean, Boolean) => Future[Xor[ServiceError, List[Action]]]
-  )(implicit ec: ExecutionContext): Bucket[Xor[ServiceError, List[Action]]] =
+    f: (String, Boolean, Boolean) => Future[Xor[Throwable, List[Action]]]
+  )(implicit ec: ExecutionContext): Bucket[Xor[Throwable, List[Action]]] =
       Benchmarker.benchmark(100) {
         f(name, userFailure, actionsFailure)
       }

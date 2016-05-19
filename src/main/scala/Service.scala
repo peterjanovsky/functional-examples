@@ -24,14 +24,13 @@ object Service {
     name: String,
     userFailure: Boolean = false,
     actionsFailure: Boolean = false
-  )(implicit ec: ExecutionContext): Future[Xor[ServiceError, List[Action]]] = 
-      for {
-        result <- MySQL.getUserByNameXor(name, userFailure)
-        actions <- result.fold(
-            error => Future.successful(Xor.left(ServiceError.MySQL(error))),
-            user => Cassandra.getActionsByUserXor(user, actionsFailure).map(_.leftMap(ServiceError.Cassandra))
-          )
-      } yield actions
+  )(implicit ec: ExecutionContext): Future[Xor[Throwable, List[Action]]] = 
+      MySQL.getUserByNameXor(name, userFailure).flatMap(xor =>
+        xor.fold(
+          error => Future.successful(Xor.left(error)),
+          user => Cassandra.getActionsByUserXor(user, actionsFailure)
+        )
+      )
 
   def mergeActionsWithUserF(
     name: String,

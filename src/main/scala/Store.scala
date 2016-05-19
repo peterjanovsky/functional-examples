@@ -18,11 +18,11 @@ object MySQL {
       optT.toRight[Throwable](new Throwable("user not found"))
     }
 
-  def getUserByNameXor(name: String, forceFailure: Boolean = false)(implicit ec: ExecutionContext): Future[Xor[MySQLError, User]] =
-    if (forceFailure) Future.successful(Xor.left(MySQLError.ConnectivityError(new Throwable("db error"))))
+  def getUserByNameXor(name: String, forceFailure: Boolean = false)(implicit ec: ExecutionContext): Future[Xor[Throwable, User]] =
+    if (forceFailure) Future.successful(Xor.left(new Throwable("db error")))
     else {
       val userO: Option[User] = UserStubs.users.find(_.name == name)
-      Future.successful(userO.map(Xor.right) getOrElse(Xor.left(MySQLError.UserNotFound)))
+      Future.successful(userO.map(Xor.right) getOrElse(Xor.left(new Throwable("user not found"))))
     }
 
   def getUserByNameF(name: String, forceFailure: Boolean = false)(implicit ec: ExecutionContext): Future[User] =
@@ -49,12 +49,12 @@ object Cassandra {
       optT.map(_._2).toRight[Throwable](new Throwable("user not found"))
     }
 
-  def getActionsByUserXor(user: User, forceFailure: Boolean = false)(implicit ec: ExecutionContext): Future[Xor[CassandraError, List[Action]]] =
-    if (forceFailure) Future.successful(Xor.left(CassandraError.ConnectivityError(new Throwable("db error"))))
+  def getActionsByUserXor(user: User, forceFailure: Boolean = false)(implicit ec: ExecutionContext): Future[Xor[Throwable, List[Action]]] =
+    if (forceFailure) Future.successful(Xor.left(new Throwable("db error")))
     else {
       val userActionsO: Option[(User, List[Action])] = ActionStubs.actions.find { case (k,v) => k == user }
       Future.successful {
-        userActionsO.map { case (k,v) => Xor.right(v) } getOrElse(Xor.left(CassandraError.ActionsNotFound))
+        userActionsO.map { case (k,v) => Xor.right(v) } getOrElse(Xor.left(new Throwable("actions not found")))
       }
     }
 
